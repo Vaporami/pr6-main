@@ -8,6 +8,9 @@ class Registry:
     def __len__(self):
         return len(self.data)
 
+    def __getitem__(self, index):
+        return self.data[index]
+
     def __str__(self):
         return str(self.data)
 
