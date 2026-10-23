@@ -1,3 +1,4 @@
+import datetime as dt
 class Person:
     def __init__(self, full_name, email, phone):
         self.full_name = full_name
@@ -22,7 +23,7 @@ class Student(Person):
     def __str__(self):
         return f"({self.full_name}; {self.email}; {self.masked_phone}; {self.group})"
 
-    def __repr(self):
+    def __repr__(self):
         return self.__str__()
 
 class Teacher(Person):
@@ -33,23 +34,20 @@ class Teacher(Person):
     def __str__(self):
         return f"({self.full_name}; {self.email}; {self.masked_phone}; {self.faculty})"
 
-    def __repr(self):
+    def __repr__(self):
         return self.__str__()
 
 class AnketaParseError(Exception):
     pass
 
-def parse_into_instance(text, ok_log_path, error_log_path, identificator):
-    ok_log_file = open(ok_log_path, "w", encoding = "utf-8")
-    error_log_file = open(error_log_path, "w", encoding = "utf-8")
-
+def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO_ID"):
     blocks = [block.strip().lower() for block in text.split(";")]
 
     # проверка типа
     person_type = blocks[0]
     if person_type != "s" and person_type != "t":
-        msg = f"Некорректный ввод: {person_type}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        msg = f"Некорректный ввод типа личности (студент или преподаватель): {person_type}"
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
     person_type = Student if person_type == "s" else Teacher
 
@@ -58,7 +56,7 @@ def parse_into_instance(text, ok_log_path, error_log_path, identificator):
     full_name_parts = blocks[1].split()
     if len(full_name_parts) < 2:
         msg = f"Не хватает части(ей) ФИО: {full_name}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
     # проверка электронной почты
@@ -66,29 +64,29 @@ def parse_into_instance(text, ok_log_path, error_log_path, identificator):
     email_parts = blocks[2].split("@")
     if len(email_parts) <= 1:
         msg = f"Отсутствуте поле домена {email}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
     at_amount = len(email_parts) - 1
     if at_amount > 1:
         msg = f"Слишком много @: {email}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
     if email_parts[0].isspace() or email_parts[1].isspace():
         msg = f"Одна из частей почта пустая: {email}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
     if email_parts[1].startswith(".") or email_parts[1].endswith("."):
         msg = f"Домен начинается или заканчивается точкой: {email}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
     domain_parts = email_parts[1].split(".")
     if len(domain_parts) != 2:
         msg = f"Домен введен неверно: {email}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
     # проверка номера телефона
@@ -98,7 +96,7 @@ def parse_into_instance(text, ok_log_path, error_log_path, identificator):
 
     if not phone.startswith("+7"):
         msg = f"Некорректное начало номера (не +7): {phone}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
     digits = []
@@ -109,7 +107,7 @@ def parse_into_instance(text, ok_log_path, error_log_path, identificator):
 
     if len(digits) != 11:
         msg = f"Некорректное кол-во цифр в номере телефона: {phone}"
-        error_log_file.write(f"[{identificator}] {msg}\n")
+        err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
     phone = f"+7 ({digits[1:4]}) {digits[4:7]}-{digits[7:9]}-{digits[9:]}"
 
@@ -119,28 +117,29 @@ def parse_into_instance(text, ok_log_path, error_log_path, identificator):
         group = blocks[4]
         if group.startswith("кафедра"):
             msg = f"Студенту присвоена кафедра, а не группа: {group.title()}"
-            error_log_file.write(f"[{identificator}] {msg}\n")
+            err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
         if group.isspace():
             msg = f"Указание группы отсутствует."
-            error_log_file.write(f"[{identificator}] {msg}\n")
+            err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
         belongs_to = group.upper()
     elif person_type == Teacher:
         faculty = blocks[4]
         if not faculty.startswith("кафедра"):
             msg = f"Преподавателю присвоена группа, а не кафедра: {faculty.title()}"
-            error_log_file.write(f"[{identificator}] {msg}\n")
+            err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
         if faculty.isspace():
             msg = f"Указание кафедры отсутствует."
-            error_log_file.write(f"[{identificator}] {msg}\n")
+            err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
         belongs_to = faculty.title()
 
     # создание объекта
     person = person_type(full_name, email, phone, belongs_to)
 
-    ok_log_file.write(f"[{identificator}] {str(person)}\n")
+    ok_log.write(f"[{identificator}] {str(person)}\n") if ok_log else None
+
     return person
 
