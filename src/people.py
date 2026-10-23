@@ -1,0 +1,146 @@
+class Person:
+    def __init__(self, full_name, email, phone):
+        self.full_name = full_name
+        self.email = email
+        self.phone = phone
+
+    @property
+    def masked_phone(self):
+        return f"{self.phone[:9]}***-**-{self.phone[-2:]}"
+
+    def __str__(self):
+        return f"({self.full_name}; {self.email}; {self.masked_phone})"
+
+    def __repr__(self):
+        return self.__str__()
+
+class Student(Person):
+    def __init__(self, full_name, email, phone, group):
+        super().__init__(full_name, email, phone)
+        self.group = group
+
+    def __str__(self):
+        return f"({self.full_name}; {self.email}; {self.masked_phone}; {self.group})"
+
+    def __repr(self):
+        return self.__str__()
+
+class Teacher(Person):
+    def __init__(self, full_name, email, phone, faculty):
+        super().__init__(full_name, email, phone)
+        self.faculty = faculty
+
+    def __str__(self):
+        return f"({self.full_name}; {self.email}; {self.masked_phone}; {self.faculty})"
+
+    def __repr(self):
+        return self.__str__()
+
+class AnketaParseError(Exception):
+    pass
+
+def parse_into_instance(text, ok_log_path, error_log_path, identificator):
+    ok_log_file = open(ok_log_path, "w", encoding = "utf-8")
+    error_log_file = open(error_log_path, "w", encoding = "utf-8")
+
+    blocks = [block.strip().lower() for block in text.split(";")]
+
+    # проверка типа
+    person_type = blocks[0]
+    if person_type != "s" and person_type != "t":
+        msg = f"Некорректный ввод: {person_type}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+    person_type = Student if person_type == "s" else Teacher
+
+    # проверка ФИО
+    full_name = blocks[1].title()
+    full_name_parts = blocks[1].split()
+    if len(full_name_parts) < 2:
+        msg = f"Не хватает части(ей) ФИО: {full_name}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+
+    # проверка электронной почты
+    email = blocks[2]
+    email_parts = blocks[2].split("@")
+    if len(email_parts) <= 1:
+        msg = f"Отсутствуте поле домена {email}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+
+    at_amount = len(email_parts) - 1
+    if at_amount > 1:
+        msg = f"Слишком много @: {email}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+
+    if email_parts[0].isspace() or email_parts[1].isspace():
+        msg = f"Одна из частей почта пустая: {email}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+
+    if email_parts[1].startswith(".") or email_parts[1].endswith("."):
+        msg = f"Домен начинается или заканчивается точкой: {email}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+
+    domain_parts = email_parts[1].split(".")
+    if len(domain_parts) != 2:
+        msg = f"Домен введен неверно: {email}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+
+    # проверка номера телефона
+    phone = blocks[3]
+    if phone.startswith("8"):
+        phone = f"+7{phone[1:]}"
+
+    if not phone.startswith("+7"):
+        msg = f"Некорректное начало номера (не +7): {phone}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+
+    digits = []
+    for i in phone:
+        if i.isdigit():
+            digits.append(i)
+    digits = "".join(digits)
+
+    if len(digits) != 11:
+        msg = f"Некорректное кол-во цифр в номере телефона: {phone}"
+        error_log_file.write(f"[{identificator}] {msg}\n")
+        raise AnketaParseError(msg)
+    phone = f"+7 ({digits[1:4]}) {digits[4:7]}-{digits[7:9]}-{digits[9:]}"
+
+    # проверка группы/кафедры
+    belongs_to = None
+    if person_type == Student:
+        group = blocks[4]
+        if group.startswith("кафедра"):
+            msg = f"Студенту присвоена кафедра, а не группа: {group.title()}"
+            error_log_file.write(f"[{identificator}] {msg}\n")
+            raise AnketaParseError(msg)
+        if group.isspace():
+            msg = f"Указание группы отсутствует."
+            error_log_file.write(f"[{identificator}] {msg}\n")
+            raise AnketaParseError(msg)
+        belongs_to = group.upper()
+    elif person_type == Teacher:
+        faculty = blocks[4]
+        if not faculty.startswith("кафедра"):
+            msg = f"Преподавателю присвоена группа, а не кафедра: {faculty.title()}"
+            error_log_file.write(f"[{identificator}] {msg}\n")
+            raise AnketaParseError(msg)
+        if faculty.isspace():
+            msg = f"Указание кафедры отсутствует."
+            error_log_file.write(f"[{identificator}] {msg}\n")
+            raise AnketaParseError(msg)
+        belongs_to = faculty.title()
+
+    # создание объекта
+    person = person_type(full_name, email, phone, belongs_to)
+
+    ok_log_file.write(f"[{identificator}] {str(person)}\n")
+    return person
+
