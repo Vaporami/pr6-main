@@ -15,6 +15,15 @@ class Person:
     def __repr__(self):
         return self.__str__()
 
+    def __lt__(self, other):
+        return self.full_name < other
+
+    def role(self): 
+        pass
+    
+    def extra(self):
+        pass
+
 class Student(Person):
     def __init__(self, full_name, email, phone, group):
         super().__init__(full_name, email, phone)
@@ -25,6 +34,12 @@ class Student(Person):
 
     def __repr__(self):
         return self.__str__()
+
+    def role(self):
+        return type(self)
+
+    def extra(self):
+        return self.group
 
 class Teacher(Person):
     def __init__(self, full_name, email, phone, faculty):
@@ -37,13 +52,19 @@ class Teacher(Person):
     def __repr__(self):
         return self.__str__()
 
+    def role(self):
+        return type(self)
+
+    def extra(self):
+        return self.faculty
+
 class AnketaParseError(Exception):
     pass
 
 def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO_ID"):
     blocks = [block.strip().lower() for block in text.split(";")]
 
-    # проверка типа
+    # проверка и определение типа
     person_type = blocks[0]
     if person_type != "s" and person_type != "t":
         msg = f"Некорректный ввод типа личности (студент или преподаватель): {person_type}"

@@ -1,4 +1,4 @@
 *.docx
 ~*
 __pycache__
-./src/*.txt
+src/*.txt

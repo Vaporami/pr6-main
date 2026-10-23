@@ -22,7 +22,7 @@ class Registry:
 
     def load(self, text_path, ok_log = None, err_log = None):
         with open(text_path, "r", encoding = "utf-8") as file:
-            # Перебор. Если очередная строка не пустая, то она обрезается и добавляется в список lines
+            # Генератор. Если очередная строка не пустая, то она обрезается и добавляется в список lines
             lines = [line.strip() for line in file if not line.isspace()]
             for i in range(len(lines)):
                 try:
@@ -32,15 +32,13 @@ class Registry:
                     self.refused += 1
                     continue
 
-    def stats(self, path_to_save = None):
+    def stats(self, file_to_write = None):
         stats = {"accepted": len(self.data), "refused": self.refused}
-        if path_to_save:
-            file = open(path_to_save, "w", encoding = "utf-8")
-            file.write(f"Принято: {stats["accepted"]}\nОтказано: {stats["refused"]}\n")
-            file.close()
+        if file_to_write:
+            file_to_write.write(f"Принято: {stats["accepted"]}\nОтказано: {stats["refused"]}\n")
         return stats
 
-    def stats_by_type(self, path_to_save = None):
+    def stats_by_type(self, file_to_write = None):
         stats = {}
         for person in self.data:
             person_type = type(person)
@@ -49,32 +47,23 @@ class Registry:
             else:
                 stats[person_type] = 1
                 
-        if path_to_save:
-            file = open(path_to_save, "w", encoding = "utf-8")
+        if file_to_write:
             for key in stats.keys():
-                file.write(f"{key}: {stats[key]}\n")
-            file.close()
+                file_to_write.write(f"{key}: {stats[key]}\n")
 
         return stats
 
-    def stats_by_belonging(self, path_to_save = None):
+    def stats_by_belonging(self, file_to_write = None):
         stats = {}
         for person in self.data:
-            if type(person) == Student:
-                if person.group in stats:
-                    stats[person.group] += 1
-                else:
-                    stats[person.group] = 1
-            elif type(person) == Teacher:
-                if person.faculty in stats:
-                    stats[person.faculty] += 1
-                else:
-                    stats[person.faculty] = 1
+            belongs_to = person.extra()
+            if belongs_to in stats:
+                stats[belongs_to] += 1
+            else:
+                stats[belongs_to] = 1
 
-        if path_to_save:
-            file = open(path_to_save, "w", encoding = "utf-8")
+        if file_to_write:
             for key in stats.keys():
-                file.write(f"{key}: {stats[key]}\n")
-            file.close()
+                file_to_write.write(f"{key}: {stats[key]}\n")
 
         return stats
