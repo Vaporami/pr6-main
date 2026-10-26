@@ -61,26 +61,25 @@ class Teacher(Person):
 class AnketaParseError(Exception):
     pass
 
-def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO_ID"):
-    blocks = [block.strip().lower() for block in text.split(";")]
-
-    # проверка и определение типа
+def parse_person_type(blocks, err_log, identificator):
     person_type = blocks[0]
     if person_type != "s" and person_type != "t":
         msg = f"Некорректный ввод типа личности (студент или преподаватель): {person_type}"
         err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
     person_type = Student if person_type == "s" else Teacher
-
-    # проверка ФИО
+    return person_type
+    
+def parse_full_name(blocks, err_log, identificator):
     full_name = blocks[1].title()
     full_name_parts = blocks[1].split()
     if len(full_name_parts) < 2:
         msg = f"Не хватает части(ей) ФИО: {full_name}"
         err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
+    return full_name
 
-    # проверка электронной почты
+def parse_email(blocks, err_log, identificator):
     email = blocks[2]
     email_parts = blocks[2].split("@")
     if len(email_parts) <= 1:
@@ -110,7 +109,9 @@ def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO
         err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
-    # проверка номера телефона
+    return email
+
+def parse_phone(blocks, err_log, identificator):
     phone = blocks[3]
     if phone.startswith("8"):
         phone = f"+7{phone[1:]}"
@@ -132,7 +133,9 @@ def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO
         raise AnketaParseError(msg)
     phone = f"+7 ({digits[1:4]}) {digits[4:7]}-{digits[7:9]}-{digits[9:]}"
 
-    # проверка группы/кафедры
+    return phone
+
+def parse_belongs_to(blocks, person_type, err_log, identificator):
     belongs_to = None
     if person_type == Student:
         group = blocks[4]
@@ -157,7 +160,18 @@ def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO
             raise AnketaParseError(msg)
         belongs_to = faculty.title()
 
-    # создание объекта
+    return belongs_to
+
+
+def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO_ID"):
+    blocks = [block.strip().lower() for block in text.split(";")]
+
+    person_type = parse_person_type(blocks, err_log, identificator)
+    full_name = parse_full_name(blocks, err_log, identificator)
+    email = parse_email(blocks, err_log, identificator)
+    phone = parse_phone(blocks, err_log, identificator)
+    belongs_to = parse_belongs_to(blocks, person_type, err_log, identificator)
+
     person = person_type(full_name, email, phone, belongs_to)
 
     ok_log.write(f"[{identificator}] {str(person)}\n") if ok_log else None
