@@ -21,7 +21,7 @@ class Person:
         return self.__str__()
 
     def __lt__(self, other):
-        return self.full_name < other
+        return self.full_name < other.full_name
 
     def __eq__(self, other):
         same_types = self.role() == other.role()
@@ -84,7 +84,7 @@ def parse_person_type(init_person_type, err_log = None, identificator = "NO_ID")
     return person_type
     
 def parse_full_name(init_full_name, err_log = None, identificator = "NO_ID"):
-    full_name = init_full_name#.title()
+    full_name = init_full_name.title()
     full_name_parts = init_full_name.split()
     if len(full_name_parts) < 2:
         msg = f"Не хватает части(ей) ФИО: {full_name}"
@@ -93,9 +93,9 @@ def parse_full_name(init_full_name, err_log = None, identificator = "NO_ID"):
     return full_name
 
 def parse_email(init_email, err_log = None, identificator = "NO_ID"):
-    email = init_email#.lower()
+    email = init_email.lower()
     email_parts = init_email.split("@")
-    if len(email_parts) <= 1:
+    if len(email_parts) <= 1 or email_parts[0] == "" or email_parts[1] == "":
         msg = f"Отсутствуте поле домена {email}"
         err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
@@ -151,23 +151,23 @@ def parse_phone(init_phone, err_log = None, identificator = "NO_ID"):
 def parse_belongs_to(init_belongs_to, person_type, err_log = None, identificator = "NO_ID"):
     belongs_to = None
     if person_type == Student:
-        group = init_belongs_to#.lower()
+        group = init_belongs_to.lower()
         if group.startswith("кафедра"):
             msg = f"Студенту присвоена кафедра, а не группа: {group.title()}"
             err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
-        if group.isspace():
+        if group.isspace() or group == "":
             msg = f"Указание группы отсутствует."
             err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
         belongs_to = group.upper()
     elif person_type == Teacher:
-        faculty = init_belongs_to#.lower()
+        faculty = init_belongs_to.lower()
         if not faculty.startswith("кафедра"):
             msg = f"Преподавателю присвоена группа, а не кафедра: {faculty.title()}"
             err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
-        if faculty.isspace():
+        if faculty.isspace() or faculty == "":
             msg = f"Указание кафедры отсутствует."
             err_log.write(f"[{identificator}] {msg}\n") if err_log else None
             raise AnketaParseError(msg)
@@ -190,4 +190,3 @@ def parse_into_instance(text, ok_log = None, err_log = None, identificator = "NO
     ok_log.write(f"[{identificator}] {str(person)}\n") if ok_log else None
 
     return person
-

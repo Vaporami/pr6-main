@@ -5,6 +5,7 @@ reg = registry.Registry()
 ok_log = open("./ok.txt", "w", encoding = "utf-8")
 err_log = open("./err.txt", "w", encoding = "utf-8")
 reg.load("../examples/example-1.txt", ok_log, err_log)
+reg.sort()
 
 print(f"{"#":<4}{"ФИО":<35}{"ПОЧТА":<25}{"НОМЕР ТЕЛЕФОНА":<20}{"ГРУППА/КАФЕДРА"}")
 print("-" * 90)
