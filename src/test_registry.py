@@ -16,11 +16,11 @@ def test_reg_length():
     assert len(r) == 0
 
 def test_reg_length_loaded(reg):
-    assert len(reg) == 6
+    assert len(reg) == 7
 
 def test_reg_stats(reg):
     stats = reg.stats()
-    assert stats["accepted"] == 6 and stats["refused"] == 4
+    assert stats["accepted"] == 7 and stats["refused"] == 4
 
 def test_reg_right_error_lines(reg):
     assert sorted(list(reg.refused_lines.keys())) == [1, 2, 4, 10]
@@ -30,10 +30,10 @@ def test_reg_load_no_file_error(reg):
         assert reg.load("./none.txt") == False
 
 def test_reg_stats_by_type(reg):
-    assert reg.stats_by_type() == {people.Student: 2, people.Teacher: 4}
+    assert reg.stats_by_type() == {people.Student: 3, people.Teacher: 4}
 
 def test_reg_stats_by_belonging_with_key(reg):
-    assert reg.stats_by_belonging(lambda p: p.role() == people.Student) == {"09С33": 1, "09С35": 1}
+    assert reg.stats_by_belonging(lambda p: p.role() == people.Student) == {"09С33": 1, "09С35": 2}
 
 def test_reg_iterability(reg):
     flag = False
@@ -42,8 +42,8 @@ def test_reg_iterability(reg):
     assert flag
 
 def test_reg_sorting(reg):
-    sorted_second_names = sorted([person.full_name.split()[0] for person in reg])
-    assert sorted_second_names[:3] == ["Волкова", "Кузнецов", "Лебедева"]
+    sorted_reg = reg.sorted()
+    assert [person.full_name.split()[0] for person in sorted_reg][:3] == ["Волкова", "Ёлкин", "Кузнецов"]
 
 def test_ok_log_writing(reg):
     path = "./save_ok.txt"

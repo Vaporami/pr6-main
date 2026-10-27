@@ -24,8 +24,12 @@ class Registry:
     def add(self, person):
         self.data.append(person)
 
-    def sort(self):
-        self.data.sort()
+    def sorted(self):
+        copy = Registry()
+        copy.data = sorted(self.data[:])
+        copy.refused = self.refused
+        copy.refused_lines = self.refused_lines.copy()
+        return copy
 
     def load(self, text_path, ok_log = None, err_log = None):
         with open(text_path, "r", encoding = "utf-8") as file:

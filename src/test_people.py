@@ -9,6 +9,9 @@ import pytest, people
 def test_parse_full_name(full_name, expected):
     assert people.parse_full_name(full_name) == expected
 
+def test_parse_full_name_double():
+    assert people.parse_full_name("петров-водкин кузьма") == "Петров-Водкин Кузьма"
+
 def test_parse_full_name_error_one_word():
     with pytest.raises(people.AnketaParseError):
         people.parse_full_name("Александр")
@@ -17,7 +20,7 @@ def test_parse_full_name_error_one_word():
 def test_parse_email_lower(email, expected):
     assert people.parse_email(email) == expected
 
-@pytest.mark.parametrize("email", ["SaFONtSeVMaIl.Ru", "IoRdANOv@gMaIlCoM", "PoPoVA@MaIl.", "@YaNdEx.Ru"])
+@pytest.mark.parametrize("email", ["SaFONtSeVMaIl.Ru", "IoRdANOv@gMaIlCoM", "PoPoVA@MaIl.", "@YaNdEx.Ru", "iv anov@mail.ru"])
 def test_parse_email_error(email):
     with pytest.raises(people.AnketaParseError):
         people.parse_email(email)

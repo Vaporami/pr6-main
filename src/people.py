@@ -21,7 +21,9 @@ class Person:
         return self.__str__()
 
     def __lt__(self, other):
-        return self.full_name < other.full_name
+        edited_self = self.full_name.lower().replace("ё", "е")
+        edited_other = other.full_name.lower().replace("ё", "е")
+        return edited_self < edited_other
 
     def __eq__(self, other):
         same_types = self.role() == other.role()
@@ -94,9 +96,13 @@ def parse_full_name(init_full_name, err_log = None, identificator = "NO_ID"):
 
 def parse_email(init_email, err_log = None, identificator = "NO_ID"):
     email = init_email.lower()
+    if len(email.split()) > 1:
+        msg = f"Пробел в указании почты: {email}"
+        err_log.write(f"[{identification}] {msg}\n") if err_log else None
+        raise AnketaParseError(msg)
     email_parts = init_email.split("@")
     if len(email_parts) <= 1 or email_parts[0] == "" or email_parts[1] == "":
-        msg = f"Отсутствуте поле домена {email}"
+        msg = f"Отсутствует поле домена: {email}"
         err_log.write(f"[{identificator}] {msg}\n") if err_log else None
         raise AnketaParseError(msg)
 
